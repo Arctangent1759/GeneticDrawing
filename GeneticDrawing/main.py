@@ -31,6 +31,12 @@ def prob_sim(probability):
 def rand_color():
 	return "#{0}{1}{2}".format(hex(random.randint(0,15))[2:],hex(random.randint(0,15))[2:],hex(random.randint(0,15))[2:])
 
+def select_random(s):
+	"""Selects a random element from a list"""
+	if len(s)==0:
+		return
+	return s[random.randint(0,len(s)-1)]
+
 #################
 #Genetic Classes#
 #################
@@ -253,16 +259,32 @@ def rand_individual():
 #Populate the world with random individuals
 population=[]
 for _ in range(INIT_POPULATION_SIZE):
-	population.append(rand_individual)
+	population.append(rand_individual())
 
 
 while True: #Main loop
-	stdev=0
 	total=0
-	mean=0
 	for individual in population: #Selection. Have the user rate each individual.
+		response=-1
 		brush.clear()
 		individual.execute()
-		individual.rating=input()
-
-
+		print("Please rate the image from 0 to 10.")
+		while not 0<=response<=10:
+			try:
+				response=int(input())
+			except ValueError:
+				response=-1
+		total+=response
+		individual.rating=response	
+	mean=total/INIT_POPULATION_SIZE #Calculate the mean
+	matinggroup=[]
+	for individual in population: #Fitness function: top 50% survives.
+		if individual.rating>=mean:
+			matinggroup.append(individual)
+	if len(matinggroup)==0:
+		continue
+	population=[]
+	for _ in range(INIT_POPULATION_SIZE): #Mate the surviving individuals at random.
+		population.append(Individual.mate(select_random(matinggroup),select_random(matinggroup)))
+	print("----------\nStarting new generation with {0} individuals.\n----------".format(len(population)))
+	
